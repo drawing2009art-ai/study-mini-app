@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Study Deck</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #14181f;
+    --ink-soft: #1e2430;
+    --card: #f6f1e6;
+    --card-line: #d8cdb2;
+    --amber: #d98e33;
+    --teal: #4fa3a0;
+    --cream-text: #ede7d8;
+    --ink-text: #23262d;
+    --muted: #9aa0ac;
+    --danger: #d9634f;
+    --good: #5a9c6e;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--cream-text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  header {
+    padding: 20px 20px 8px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  header h1 {
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    font-size: 21px;
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+
+  header .counter {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px 8px;
+  }
+
+  .view { width: 100%; max-width: 420px; display: none; }
+  .view.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* ---------- Flashcard (index card) ---------- */
+
+  .card-stage {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    max-height: 46vh;
+    perspective: 1400px;
+    margin-bottom: 18px;
+  }
+
+  .card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(.4,.2,.2,1);
+    cursor: pointer;
+  }
+
+  .card.flipped { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--ink-text);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    padding: 26px 22px;
+    display: flex;
+    flex-direction: column;
+    background-image:
+      linear-gradient(var(--card-line) 1px, transparent 1px);
+    background-size: 100% 28px;
+    background-position: 0 64px;
+  }
+
+  .face::before {
+    content: "";
+    position: absolute;
+    left: 34px; top: 0; bottom: 0;
+    width: 1px;
+    background: var(--danger);
+    opacity: 0.35;
+  }
+
+  .face .tab {
+    position: absolute;
+    top: -12px; left: 20px;
+    background: var(--amber);
+    color: #2a1a05;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .face .word {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 26px;
+    margin-top: 26px;
+    padding-left: 18px;
+  }
+
+  .face .word-index {
+    position: absolute;
+    top: 16px; right: 18px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .face.back .word {
+    font-size: 18px;
+    color: var(--muted);
+    font-style: normal;
+    font-weight: 500;
+    margin-top: 18px;
+  }
+
+  .face .definition {
+    padding-left: 18px;
+    margin-top: 14px;
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  .face .example {
+    padding-left: 18px;
+    margin-top: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #5b5646;
+    font-style: italic;
+  }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+
+  button.ctrl {
+    flex: 1;
+    background: var(--ink-soft);
+    color: var(--cream-text);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 13px 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  button.ctrl.accent {
+    background: var(--amber);
+    color: #2a1a05;
+    border-color: transparent;
+    flex: 1.3;
+  }
+
+  /* ---------- Grammar view ---------- */
+
+  .q-card {
+    background: var(--ink-soft);
+    border-radius: 10px;
+    padding: 20px;
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .q-card .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--amber);
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .q-card .question {
+    font-family: 'Lora', serif;
+    font-size: 17px;
+    margin-bottom: 18px;
+    line-height: 1.4;
+  }
+
+  .opt {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--ink);
+    color: var(--cream-text);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+  }
+
+  .opt.correct { background: rgba(90,156,110,0.25); border-color: var(--good); }
+  .opt.wrong { background: rgba(217,99,79,0.25); border-color: var(--danger); }
+  .opt:disabled { cursor: default; opacity: 0.9; }
+
+  .explanation {
+    margin-top: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+    border-top: 1px dashed rgba(255,255,255,0.12);
+    padding-top: 12px;
+    display: none;
+  }
+
+  .next-q {
+    margin-top: 16px;
+    width: 100%;
+  }
+
+  /* ---------- Streak view ---------- */
+
+  .streak-stamp {
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    border: 3px dashed var(--amber);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    transform: rotate(-6deg);
+  }
+
+  .streak-stamp .num {
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    font-size: 46px;
+    color: var(--amber);
+    line-height: 1;
+  }
+
+  .streak-stamp .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .streak-note {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 300px;
+  }
+
+  /* ---------- Tab bar ---------- */
+
+  nav.tabbar {
+    display: flex;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    background: var(--ink-soft);
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+  }
+
+  nav.tabbar button {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 8px 0 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  nav.tabbar button .icon { font-size: 19px; }
+
+  nav.tabbar button.active { color: var(--amber); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Study Deck</h1>
+  <span class="counter" id="headerCounter">VOCAB · 1/10</span>
+</header>
+
+<main>
+
+  <!-- VOCAB VIEW -->
+  <section class="view active" id="view-vocab">
+    <div class="card-stage">
+      <div class="card" id="vocabCard">
+        <div class="face front">
+          <span class="tab">SAT VOCAB</span>
+          <span class="word-index" id="vocabIndexFront">01</span>
+          <div class="word" id="vocabWord">Ubiquitous</div>
+        </div>
+        <div class="face back">
+          <span class="tab">DEFINITION</span>
+          <div class="word" id="vocabWordBack">Ubiquitous</div>
+          <div class="definition" id="vocabDef">Present everywhere at once.</div>
+          <div class="example" id="vocabExample">e.g. Smartphones have become ubiquitous.</div>
+        </div>
+      </div>
+    </div>
+    <div class="hint">TAP CARD TO FLIP</div>
+    <div class="controls">
+      <button class="ctrl" id="vocabPrev">‹ Prev</button>
+      <button class="ctrl accent" id="vocabShuffle">Shuffle</button>
+      <button class="ctrl" id="vocabNext">Next ›</button>
+    </div>
+  </section>
+
+  <!-- GRAMMAR VIEW -->
+  <section class="view" id="view-grammar">
+    <div class="q-card">
+      <span class="eyebrow" id="grammarEyebrow">QUESTION 1 / 5</span>
+      <div class="question" id="grammarQuestion">Choose the correct sentence:</div>
+      <div id="grammarOptions"></div>
+      <div class="explanation" id="grammarExplanation"></div>
+    </div>
+    <button class="ctrl accent next-q" id="grammarNext">Next question ›</button>
+  </section>
+
+  <!-- STREAK VIEW -->
+  <section class="view" id="view-streak">
+    <div class="streak-stamp">
+      <div class="num" id="streakNum">0</div>
+      <div class="label">DAY STREAK</div>
+    </div>
+    <p class="streak-note">
+      This streak counts days you've opened this study deck on this device.
+      It's separate from your Telegram bot's streak for now &mdash; syncing
+      the two would need the mini app and bot to share a live backend.
+    </p>
+  </section>
+
+</main>
+
+<nav class="tabbar">
+  <button class="tab-btn active" data-view="vocab"><span class="icon">📇</span>Vocab</button>
+  <button class="tab-btn" data-view="grammar"><span class="icon">✍️</span>Grammar</button>
+  <button class="tab-btn" data-view="streak"><span class="icon">🔥</span>Streak</button>
+</nav>
+
+<script>
+  // Let the mini app match the user's Telegram theme (dark/light) and expand
+  // to full height. Wrapped in try/catch so this file still works fine when
+  // opened in a plain browser, not just inside Telegram.
+  try {
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+  } catch (e) { /* not running inside Telegram - that's fine for testing */ }
+
+  // ---------------- DATA (mirrors bot.py's content) ----------------
+
+  const VOCAB = [
+    ["Ubiquitous", "Present everywhere at once.", "Smartphones have become ubiquitous in modern life."],
+    ["Ephemeral", "Lasting for a very short time.", "The beauty of cherry blossoms is ephemeral."],
+    ["Meticulous", "Very careful and precise about details.", "She was meticulous in checking every line of code."],
+    ["Ambivalent", "Having mixed feelings about something.", "He felt ambivalent about moving to a new city."],
+    ["Candid", "Honest and direct, without holding back.", "The coach gave candid feedback after the match."],
+    ["Pragmatic", "Dealing with things realistically, not idealistically.", "A pragmatic approach solved the budget problem."],
+    ["Superfluous", "More than what is needed; unnecessary.", "The report had a lot of superfluous detail."],
+    ["Tenacious", "Persistent; not easily giving up.", "Her tenacious effort finally paid off."],
+    ["Ostensible", "Stated or appearing to be true, but maybe not.", "The ostensible reason for the delay was traffic."],
+    ["Diligent", "Showing careful, persistent effort.", "A diligent student reviews notes every day."],
+  ];
+
+  const GRAMMAR = [
+    ["Choose the correct sentence:",
+     ["Neither of the boys were ready.", "Neither of the boys was ready.", "Neither of the boys are ready."],
+     1, "\u2018Neither\u2019 is singular, so it takes \u2018was\u2019, not \u2018were\u2019 or \u2018are\u2019."],
+    ["Choose the correct sentence:",
+     ["She is one of the students who is always on time.", "She is one of the students who are always on time."],
+     1, "\u2018Who\u2019 refers to \u2018students\u2019 (plural), so the verb must be plural: \u2018are\u2019."],
+    ["Choose the correct sentence:",
+     ["Its raining outside.", "It's raining outside.", "Its' raining outside."],
+     1, "\u201cIt's\u201d is the contraction for \u2018it is\u2019. \u2018Its\u2019 shows possession."],
+    ["Choose the correct sentence:",
+     ["Me and him went to the store.", "Him and I went to the store.", "He and I went to the store."],
+     2, "Use subject pronouns (\u2018he\u2019, \u2018I\u2019) when they're doing the action."],
+    ["Choose the correct sentence:",
+     ["The team are going to win.", "The team is going to win."],
+     1, "In American English, collective nouns like \u2018team\u2019 are treated as singular."],
+  ];
+
+  // ---------------- TAB SWITCHING ----------------
+
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const views = { vocab: document.getElementById('view-vocab'),
+                  grammar: document.getElementById('view-grammar'),
+                  streak: document.getElementById('view-streak') };
+  const headerCounter = document.getElementById('headerCounter');
+
+  function setActiveTab(name) {
+    tabButtons.forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    Object.entries(views).forEach(([k, el]) => el.classList.toggle('active', k === name));
+    if (name === 'vocab') headerCounter.textContent = `VOCAB · ${vocabIndex + 1}/${VOCAB.length}`;
+    if (name === 'grammar') headerCounter.textContent = `GRAMMAR · ${grammarIndex + 1}/${GRAMMAR.length}`;
+    if (name === 'streak') headerCounter.textContent = `STREAK`;
+  }
+
+  tabButtons.forEach(btn => btn.addEventListener('click', () => setActiveTab(btn.dataset.view)));
+
+  // ---------------- VOCAB LOGIC ----------------
+
+  let vocabIndex = 0;
+  const vocabCard = document.getElementById('vocabCard');
+
+  function renderVocab() {
+    const [word, def, example] = VOCAB[vocabIndex];
+    document.getElementById('vocabWord').textContent = word;
+    document.getElementById('vocabWordBack').textContent = word;
+    document.getElementById('vocabDef').textContent = def;
+    document.getElementById('vocabExample').textContent = 'e.g. ' + example;
+    document.getElementById('vocabIndexFront').textContent = String(vocabIndex + 1).padStart(2, '0');
+    vocabCard.classList.remove('flipped');
+    headerCounter.textContent = `VOCAB · ${vocabIndex + 1}/${VOCAB.length}`;
+  }
+
+  vocabCard.addEventListener('click', () => vocabCard.classList.toggle('flipped'));
+
+  document.getElementById('vocabNext').addEventListener('click', () => {
+    vocabIndex = (vocabIndex + 1) % VOCAB.length;
+    renderVocab();
+  });
+  document.getElementById('vocabPrev').addEventListener('click', () => {
+    vocabIndex = (vocabIndex - 1 + VOCAB.length) % VOCAB.length;
+    renderVocab();
+  });
+  document.getElementById('vocabShuffle').addEventListener('click', () => {
+    vocabIndex = Math.floor(Math.random() * VOCAB.length);
+    renderVocab();
+  });
+
+  renderVocab();
+
+  // ---------------- GRAMMAR LOGIC ----------------
+
+  let grammarIndex = 0;
+
+  function renderGrammar() {
+    const [question, options, correctIdx, explanation] = GRAMMAR[grammarIndex];
+    document.getElementById('grammarEyebrow').textContent = `QUESTION ${grammarIndex + 1} / ${GRAMMAR.length}`;
+    document.getElementById('grammarQuestion').textContent = question;
+    const optsEl = document.getElementById('grammarOptions');
+    optsEl.innerHTML = '';
+    const explEl = document.getElementById('grammarExplanation');
+    explEl.style.display = 'none';
+    explEl.textContent = explanation;
+
+    options.forEach((opt, i) => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.textContent = opt;
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.opt').forEach(o => o.disabled = true);
+        if (i === correctIdx) {
+          b.classList.add('correct');
+        } else {
+          b.classList.add('wrong');
+          optsEl.children[correctIdx].classList.add('correct');
+        }
+        explEl.style.display = 'block';
+      });
+      optsEl.appendChild(b);
+    });
+
+    headerCounter.textContent = `GRAMMAR · ${grammarIndex + 1}/${GRAMMAR.length}`;
+  }
+
+  document.getElementById('grammarNext').addEventListener('click', () => {
+    grammarIndex = (grammarIndex + 1) % GRAMMAR.length;
+    renderGrammar();
+  });
+
+  renderGrammar();
+
+  // ---------------- STREAK LOGIC (local to this device/browser) ----------------
+
+  function updateStreak() {
+    const today = new Date().toISOString().slice(0, 10);
+    const last = localStorage.getItem('lastStudyDate');
+    let streak = parseInt(localStorage.getItem('streakCount') || '0', 10);
+
+    if (last !== today) {
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      streak = (last === yesterday) ? streak + 1 : 1;
+      localStorage.setItem('lastStudyDate', today);
+      localStorage.setItem('streakCount', String(streak));
+    }
+    document.getElementById('streakNum').textContent = streak;
+  }
+
+  updateStreak();
+</script>
+
+</body>
+</html>
