@@ -1,0 +1,8 @@
+{
+  "appId": "com.timer.app",
+  "appName": "Timer",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
