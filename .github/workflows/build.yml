@@ -1,5 +1,5 @@
 
-name: Build Android APK
+name: Build Android Apps
 
 on:
   workflow_dispatch:
@@ -7,8 +7,13 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
-  build:
+
+  build-habit-tracker:
+    name: Build Habit Tracker APK
     runs-on: ubuntu-latest
 
     defaults:
@@ -16,13 +21,16 @@ jobs:
         working-directory: timer-android-github
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - uses: actions/setup-java@v4
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
@@ -33,20 +41,55 @@ jobs:
       - name: Add Android platform
         run: npx cap add android
 
-      - name: Sync web files
+      - name: Sync Android
         run: npx cap sync android
 
-      - name: Apply custom app icon
-        run: bash scripts/apply-android-icons.sh
-
-      - name: Build APK
-        working-directory: timer-android-github/android
+      - name: Build Habit Tracker APK
         run: |
+          cd android
           chmod +x gradlew
           ./gradlew assembleDebug
 
-      - name: Upload APK
+      - name: Upload Habit Tracker APK
         uses: actions/upload-artifact@v4
         with:
-          name: Timer-Android-APK
+          name: Habit-Tracker-APK
           path: timer-android-github/android/app/build/outputs/apk/debug/app-debug.apk
+
+  build-piptrack:
+    name: Build PipTrack APK
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: PipTrack-GitHub-Ready
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build PipTrack APK
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload PipTrack APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PipTrack-APK
+          path: PipTrack-GitHub-Ready/app/build/outputs/apk/debug/app-debug.apk
