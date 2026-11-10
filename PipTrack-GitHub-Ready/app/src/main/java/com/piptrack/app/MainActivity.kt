@@ -91,6 +91,6 @@ class MainActivity : ComponentActivity() {
         if (subtitle.isNotBlank()) Text(subtitle, color = Muted, fontSize = 12.sp)
     }
 }
-@Composable fun Metric(label: String, value: String, accent: Color = Color.White, modifier: Modifier = Modifier) {
-    Card(modifier, colors = CardDefaults.cardColors(containerColor = Panel), shape = RoundedCornerShape(16.dp)) {
-        Column(Modifier.padding(14.dp)) {
+@Composable
+fun Metric(
+    label: String,
