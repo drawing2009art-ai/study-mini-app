@@ -1,4 +1,3 @@
-
 package com.piptrack.app
 
 import android.os.Bundle
@@ -93,5 +92,5 @@ class MainActivity : ComponentActivity() {
     }
 }
 @Composable
-fun Metric(
-    label: String,
+fun MetricCard(label: String, metricValue: String, accent: Color = Color.White, modifier: Modifier = Modifier) {
+    Card(
