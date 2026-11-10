@@ -211,18 +211,18 @@ fun fmt(n: Double) = String.format(Locale.US, "%.1f", n)
     AlertDialog(onDismissRequest = onDismiss, title = { Text(if (existing == null) "Add trade" else "Edit trade") },
         text = {
             Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Field("Instrument", instrument) { instrument = it.uppercase() }
+                Field("Instrument", instrument, onChange = { instrument = it.uppercase() })
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(direction == "BUY", { direction = "BUY" }, label = { Text("BUY") })
                     FilterChip(direction == "SELL", { direction = "SELL" }, label = { Text("SELL") })
                 }
-                Field("Entry price", entry, { entry = it }, true)
-                Field("Exit price (closed trades)", exit, { exit = it }, true)
-                Field("Pip size", pip, { pip = it }, true)
-                Field("Manual pip result (optional)", manual, { manual = it }, true)
-                Field("Initial risk in pips (optional)", risk, { risk = it }, true)
-                Field("Strategy (optional)", strategy) { strategy = it }
-                Field("Notes (optional)", notes, multiline = true) { notes = it }
+                Field("Entry price", entry, onChange = { entry = it }, numeric = true)
+                Field("Exit price (closed trades)", exit, onChange = { exit = it }, numeric = true)
+                Field("Pip size", pip, onChange = { pip = it }, numeric = true)
+                Field("Manual pip result (optional)", manual, onChange = { manual = it }, numeric = true)
+                Field("Initial risk in pips (optional)", risk, onChange = { risk = it }, numeric = true)
+                Field("Strategy (optional)", strategy, onChange = { strategy = it })
+                Field("Notes (optional)", notes, onChange = { notes = it }, multiline = true)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Closed trade", Modifier.weight(1f))
                     Switch(isClosed, { isClosed = it })
@@ -363,9 +363,9 @@ fun fmt(n: Double) = String.format(Locale.US, "%.1f", n)
             Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Manage instruments", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Field("Symbol (e.g. EURUSD)", instrumentName) { instrumentName = it }
-                    Field("Pip size", pipSize, { pipSize = it }, numeric = true)
-                    Field("Display precision", precision, { precision = it }, numeric = true)
+                    Field("Symbol (e.g. EURUSD)", instrumentName, onChange = { instrumentName = it })
+                    Field("Pip size", pipSize, onChange = { pipSize = it }, numeric = true)
+                    Field("Display precision", precision, onChange = { precision = it }, numeric = true)
                     Button(onClick = {
                         val p = pipSize.toDoubleOrNull(); val d = precision.toIntOrNull()
                         if (instrumentName.isBlank() || p == null || p <= 0 || d == null || d !in 0..10) message = "Enter a symbol, positive pip size and precision 0–10"
@@ -377,12 +377,12 @@ fun fmt(n: Double) = String.format(Locale.US, "%.1f", n)
             Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Strategies and tags", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Field("New strategy", strategyName) { strategyName = it }
+                    Field("New strategy", strategyName, onChange = { strategyName = it })
                     OutlinedButton(onClick = {
                         if (strategyName.isBlank()) message = "Enter a strategy name"
                         else { vm.addStrategy(strategyName); strategyName = ""; message = "Strategy saved" }
                     }, modifier = Modifier.fillMaxWidth()) { Text("Add strategy") }
-                    Field("New tag", tagName) { tagName = it }
+                    Field("New tag", tagName, onChange = { tagName = it })
                     OutlinedButton(onClick = {
                         if (tagName.isBlank()) message = "Enter a tag name"
                         else { vm.addTag(tagName); tagName = ""; message = "Tag saved" }
