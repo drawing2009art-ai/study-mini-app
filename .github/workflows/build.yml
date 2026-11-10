@@ -56,6 +56,7 @@ jobs:
           name: Habit-Tracker-APK
           path: timer-android-github/android/app/build/outputs/apk/debug/app-debug.apk
 
+ 
   build-piptrack:
     name: Build PipTrack APK
     runs-on: ubuntu-latest
@@ -74,11 +75,8 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android SDK
-        run: sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -93,3 +91,4 @@ jobs:
         with:
           name: PipTrack-APK
           path: PipTrack-GitHub-Ready/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
